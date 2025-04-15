@@ -2,27 +2,57 @@
 <html>
 <head>
     <title>My GitHub Repo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #searchInput {
+            padding: 8px;
+            margin-bottom: 16px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .file-item {
+            margin-bottom: 1em;
+        }
+    </style>
 </head>
 <body>
     <h1>GitHub Repo</h1>
     <p>Please see the uploaded files below.</p>
-    <ol>
-        <li>
+
+    <input type="text" id="searchInput" onkeyup="filterFiles()" placeholder="Search for keywords..." />
+
+    <ol id="fileList">
+        <li class="file-item">
             <p>
-            April 4, 2025 - 
-            <a href="all-files/Impact on Grain Exports.pdf" download>USTR - Tax on Chinese vessels - Impact on Canada brief</a>. 
-          </p>
+                April 4, 2025 - 
+                <a href="all-files/Impact on Grain Exports.pdf" download>USTR - Tax on Chinese vessels - Impact on Canada brief</a>.
+            </p>
         </li>
-        <li>
-          <p>
-            April 10, 2025 - 
-            <a href="all-files/BRM Data Slides 2025_updated_2.pdf" download>BRM Data presentation to the Board</a>. 
-          </p>
-          <p>
-            Here is the PPT: 
-            <a href="all-files/BRM Data Slides 2025_updated_2.pptx" download> PPTX version</a>.
-          </p>
+        <li class="file-item">
+            <p>
+                April 10, 2025 - 
+                <a href="all-files/BRM Data Slides 2025_updated_2.pdf" download>BRM Data presentation to the Board</a>.
+            </p>
+            <p>
+                Here is the PPT: 
+                <a href="all-files/BRM Data Slides 2025_updated_2.pptx" download>PPTX version</a>.
+            </p>
         </li>
     </ol>
+
+    <script>
+        function filterFiles() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const fileItems = document.querySelectorAll('#fileList .file-item');
+
+            fileItems.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+    </script>
 </body>
 </html>
