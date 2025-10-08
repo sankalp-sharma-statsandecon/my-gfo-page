@@ -31,6 +31,17 @@
         tr:hover {
             background-color: #f9f9f9;
         }
+        .icon {
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        #lastUpdated {
+            margin-top: 16px;
+            font-size: 0.9em;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -43,64 +54,75 @@
 <table id="fileTable">
     <thead>
         <tr>
-            <th>Date</th>
+            <th id="dateHeader">Date ▲▼</th>
             <th>Files / Description</th>
         </tr>
     </thead>
     <tbody>
         <tr data-date="2025-04-04">
             <td>April 4, 2025</td>
-            <td><a href="all-files/Impact on Grain Exports.pdf" download>USTR - Tax on Chinese vessels - Impact on Canada brief</a></td>
+            <td><a href="all-files/Impact on Grain Exports.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">USTR - Tax on Chinese vessels - Impact on Canada brief</a></td>
         </tr>
         <tr data-date="2025-04-10">
             <td>April 10, 2025</td>
             <td>
-                <a href="all-files/BRM Data Slides 2025_updated_2.pdf" download>BRM Data presentation to the Board</a><br>
-                <a href="all-files/BRM Data Slides 2025_updated_2.pptx" download>PPTX version</a>
+                <a href="all-files/BRM Data Slides 2025_updated_2.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">BRM Data presentation to the Board</a><br>
+                <a href="all-files/BRM Data Slides 2025_updated_2.pptx" download><img class="icon" src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png">PPTX version</a>
             </td>
         </tr>
         <tr data-date="2025-04-15">
             <td>April 15, 2025</td>
             <td>
-                <a href="all-files/Reported Production - GFO.pdf" download>Production Tonnage Forecast Analysis</a><br>
-                <a href="all-files/ARIMA_code.R" download>R code for ARIMA</a><br>
-                <a href="all-files/NN_forecast.ipynb" download>Python code for NN-LSTM</a>
+                <a href="all-files/Reported Production - GFO.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">Production Tonnage Forecast Analysis</a><br>
+                <a href="all-files/ARIMA_code.R" download><img class="icon" src="https://img.icons8.com/ios-filled/50/source-code.png">R code for ARIMA</a><br>
+                <a href="all-files/NN_forecast.ipynb" download><img class="icon" src="https://img.icons8.com/color/48/python.png">Python code for NN-LSTM</a>
             </td>
         </tr>
         <tr data-date="2025-05-30">
             <td>May 30, 2025</td>
-            <td><a href="all-files/Sharma_CAES_2025.pdf" download>CAES presentation (May 2025)</a></td>
+            <td><a href="all-files/Sharma_CAES_2025.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">CAES presentation (May 2025)</a></td>
         </tr>
         <tr data-date="2025-06-06">
             <td>June 6, 2025</td>
-            <td><a href="all-files/RMP 2025 Pre-harvest Estimate - June 3 - update.pdf" download>RMP Update (June 2025)</a></td>
+            <td><a href="all-files/RMP 2025 Pre-harvest Estimate - June 3 - update.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">RMP Update (June 2025)</a></td>
         </tr>
         <tr data-date="2025-06-17">
             <td>June 17, 2025</td>
             <td>
-                <a href="all-files/RINs_RVOs_Explainer.pdf" download>Explainer: RINs and RVOs</a><br>
-                <a href="all-files/BRM Committee presentation deck_Oct 2025.pdf" download>BRM presentation: RMP and US vs Canada</a><br>
-                <a href="all-files/BRM Committee presentation deck.pptx" download>BRM presentation: RMP and US vs Canada (PPT version)</a>
+                <a href="all-files/RINs_RVOs_Explainer.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">Explainer: RINs and RVOs</a><br>
+                <a href="all-files/BRM Committee presentation deck_Oct 2025.pdf" download><img class="icon" src="https://img.icons8.com/color/48/pdf.png">BRM presentation: RMP and US vs Canada</a><br>
+                <a href="all-files/BRM Committee presentation deck.pptx" download><img class="icon" src="https://img.icons8.com/color/48/microsoft-powerpoint-2019.png">BRM presentation (PPT version)</a>
             </td>
         </tr>
     </tbody>
 </table>
 
+<p id="lastUpdated"></p>
+
 <script>
-    // Sort table rows by date (newest first)
     const table = document.getElementById('fileTable');
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
+    let sortAsc = false;
 
-    rows.sort((a, b) => {
-        const dateA = new Date(a.dataset.date);
-        const dateB = new Date(b.dataset.date);
-        return dateB - dateA; // descending order
+    // Initial sort (newest first)
+    sortRows(false);
+
+    // Make date header clickable
+    document.getElementById('dateHeader').addEventListener('click', () => {
+        sortAsc = !sortAsc;
+        sortRows(sortAsc);
     });
 
-    rows.forEach(row => tbody.appendChild(row));
+    function sortRows(ascending) {
+        const sorted = [...rows].sort((a, b) => {
+            const dateA = new Date(a.dataset.date);
+            const dateB = new Date(b.dataset.date);
+            return ascending ? dateA - dateB : dateB - dateA;
+        });
+        sorted.forEach(row => tbody.appendChild(row));
+    }
 
-    // Filter by search
     function filterFiles() {
         const filter = document.getElementById('searchInput').value.toLowerCase();
         rows.forEach(row => {
@@ -108,6 +130,10 @@
             row.style.display = text.includes(filter) ? '' : 'none';
         });
     }
+
+    // Add last updated timestamp
+    const lastUpdated = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdated}`;
 </script>
 ```
 
