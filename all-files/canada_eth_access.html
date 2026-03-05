@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protect Canada's Ethanol Industry</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Open+Sans:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* Brighter, high-contrast palette for dark mode readability */
+    --red: #FF4D4D; 
+    --dark-red: #CC0000;
+    --blue: #4DA8DA; 
+    --gold: #FFC107; 
+    --green: #4ADE80; 
+    --light: #FFFFFF;
+  }
+
+  body {
+    font-family: 'Open Sans', sans-serif;
+    background: #0a0a0a;
+    color: white;
+    overflow-x: hidden;
+  }
+
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #001f4d 0%, #003580 40%, #5a0000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .maple-bg {
+    position: absolute;
+    font-size: 400px;
+    opacity: 0.06; /* Slightly more visible */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: slowSpin 60s linear infinite;
+  }
+
+  @keyframes slowSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  .hero-eyebrow {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(14px, 2.5vw, 18px);
+    font-weight: 600;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.3s forwards;
+  }
+
+  .hero h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(36px, 7vw, 90px);
+    font-weight: 700;
+    line-height: 1.05;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.5s forwards;
+  }
+
+  .hero h1 span { color: var(--red); }
+
+  .hero-sub {
+    font-size: clamp(16px, 2.4vw, 22px);
+    color: rgba(255,255,255,0.95); /* High contrast */
+    font-weight: 500;
+    margin-top: 20px;
+    max-width: 640px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.7s forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    animation: fadeIn 1s 1.5s forwards;
+  }
+  .scroll-cue span { font-size: 13px; font-weight: 600; letter-spacing: 3px; color: rgba(255,255,255,0.7); }
+  .scroll-arrow {
+    width: 24px; height: 24px;
+    border-right: 3px solid rgba(255,255,255,0.6);
+    border-bottom: 3px solid rgba(255,255,255,0.6);
+    transform: rotate(45deg);
+    animation: bounce 1.5s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(6px)} }
+
+  section {
+    padding: 80px 20px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    display: inline-block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* Stronger borders and text for labels */
+  .label-challenge { background: rgba(213,43,30,0.2); color: #ff8b8b; border: 2px solid rgba(255,77,77,0.6); }
+  .label-landscape { background: rgba(245,166,35,0.15); color: var(--gold); border: 2px solid rgba(255,193,7,0.6); }
+  .label-risk      { background: rgba(180,0,0,0.2); color: #ff9999; border: 2px solid rgba(255,102,102,0.6); }
+  .label-solution  { background: rgba(45,125,70,0.2); color: #85e0a3; border: 2px solid rgba(74,222,128,0.6); }
+  .label-opp       { background: rgba(255,255,255,0.1); color: #ffffff; border: 2px solid rgba(255,255,255,0.4); }
+
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .section-desc {
+    font-size: clamp(15px, 1.8vw, 18px);
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+    line-height: 1.7;
+    max-width: 700px;
+  }
+
+  .divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    margin: 0 40px;
+  }
+
+  .challenge-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 48px;
+  }
+
+  @media(max-width:600px){ .challenge-grid{grid-template-columns:1fr;} }
+
+  .credit-card {
+    background: linear-gradient(135deg, #1a3a1a, #2d5a2d);
+    border: 2px solid rgba(74,222,128,0.7);
+    border-radius: 16px;
+    padding: 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .credit-amount {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(48px, 8vw, 80px);
+    font-weight: 700;
+    color: #85e0a3;
+    line-height: 1;
+  }
+  .credit-label { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.95); margin-top: 8px; letter-spacing: 1px; }
+  .credit-tag { font-family: 'Oswald', sans-serif; font-size: 20px; color: var(--gold); margin-top: 12px; }
+
+  .challenge-text-card {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 16px;
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .challenge-text-card h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 24px;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .challenge-text-card p {
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.7;
+  }
+
+  .bar-section {
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 48px;
+    margin-top: 48px;
+  }
+
+  .bar-compare {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 60px;
+    height: 260px;
+    margin-top: 40px;
+  }
+
+  .bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    max-width: 200px;
+  }
+
+  .bar-fill {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 16px;
+    transition: height 1.5s cubic-bezier(0.22,1,0.36,1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-bottom: none;
+  }
+
+  /* Brighter gradients for the bars */
+  .bar-ca { background: linear-gradient(180deg, #FF6B6B, #B30000); height: 0; }
+  .bar-us { background: linear-gradient(180deg, #4DA8DA, #004080); height: 0; }
+
+  .bar-val {
+    font-family: 'Oswald', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8); /* Added shadow for readability */
+  }
+
+  .bar-label {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.9);
+    text-align: center;
+  }
+
+  .bar-flag { font-size: 36px; }
+
+  .growth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(213,43,30,0.2);
+    border: 2px solid rgba(255,77,77,0.6);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 20px;
+    color: #ff9999;
+    margin-top: 32px;
+  }
+
+  .risk-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 20px;
+    margin-top: 48px;
+  }
+
+  @media(max-width:640px){ .risk-grid{grid-template-columns:1fr;} }
+
+  .risk-card {
+    background: rgba(180,0,0,0.15);
+    border: 2px solid rgba(255,102,102,0.4);
+    border-radius: 14px;
+    padding: 28px 22px;
+    text-align: center;
+  }
+
+  .risk-icon { font-size: 44px; margin-bottom: 12px; }
+
+  .risk-card h4 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #ff9999;
+  }
+
+  .risk-card p { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1.6; }
+
+  .solutions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-top: 48px;
+  }
+
+  @media(max-width:600px){ .solutions-grid{grid-template-columns:1fr;} }
+
+  .sol-card {
+    border-radius: 18px;
+    padding: 40px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sol-card-1 {
+    background: linear-gradient(135deg, #1a3d2b, #0d2218);
+    border: 2px solid rgba(74,222,128,0.6);
+  }
+
+  .sol-card-2 {
+    background: linear-gradient(135deg, #1a2d4d, #0a1828);
+    border: 2px solid rgba(77,168,218,0.6);
+  }
+
+  .sol-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(56px, 10vw, 96px);
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.2; /* Slightly more visible */
+    position: absolute;
+    top: 16px;
+    right: 20px;
+  }
+
+  .sol-icon { font-size: 52px; margin-bottom: 20px; }
+
+  .sol-card h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(22px, 3vw, 30px);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .sol-card-1 h3 { color: #85e0a3; }
+  .sol-card-2 h3 { color: #8bc7ff; }
+
+  .sol-card p { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.95); line-height: 1.7; }
+
+  .sol-highlight {
+    display: inline-block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-top: 16px;
+    padding: 6px 16px;
+    border-radius: 8px;
+  }
+
+  .sol-card-1 .sol-highlight { background: rgba(95,214,138,0.25); color: #85e0a3; border: 1px solid #85e0a3;}
+  .sol-card-2 .sol-highlight { background: rgba(122,184,255,0.25); color: #8bc7ff; border: 1px solid #8bc7ff;}
+
+  .opp-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 48px;
+  }
+
+  .opp-item:nth-child(5) {
+    grid-column: span 2;
+  }
+
+  @media(max-width:560px){ 
+    .opp-list { grid-template-columns: 1fr; }
+    .opp-item:nth-child(5) { grid-column: span 1; }
+  }
+
+  .opp-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(255,255,255,0.08); /* Brighter background */
+    border: 2px solid rgba(255,255,255,0.25); /* Thicker, brighter border */
+    border-radius: 14px;
+    padding: 24px;
+  }
+
+  .opp-check {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    background: rgba(95,214,138,0.25);
+    border: 2px solid rgba(95,214,138,0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-top: 2px;
+  }
+
+  .opp-item h4 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 19px;
+    margin-bottom: 6px;
+    color: white;
+  }
+
+  .opp-item p { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1.5; }
+
+  footer {
+    background: linear-gradient(180deg, transparent, rgba(213,43,30,0.25));
+    text-align: center;
+    padding: 60px 20px;
+    border-top: 2px solid rgba(255,255,255,0.15);
+  }
+
+  footer h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  footer h2 span { color: var(--red); }
+  footer p { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 16px; letter-spacing: 2px; }
+
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin-top: 48px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0; bottom: 0;
+    width: 3px; /* Thicker line */
+    background: linear-gradient(180deg, var(--red), var(--gold), var(--blue));
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 36px;
+    padding-left: 24px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -29px;
+    top: 6px;
+    width: 14px; /* Larger dots */
+    height: 14px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid #0a0a0a;
+    box-shadow: 0 0 12px rgba(245,166,35,0.8);
+  }
+
+  .timeline-year {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .timeline-item h4 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+
+  .timeline-item p { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1.6; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+  .stagger > * { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .stagger.visible > *:nth-child(1) { opacity:1; transform:none; transition-delay: 0s; }
+  .stagger.visible > *:nth-child(2) { opacity:1; transform:none; transition-delay: 0.15s; }
+  .stagger.visible > *:nth-child(3) { opacity:1; transform:none; transition-delay: 0.3s; }
+  .stagger.visible > *:nth-child(4) { opacity:1; transform:none; transition-delay: 0.45s; }
+  .stagger.visible > *:nth-child(5) { opacity:1; transform:none; transition-delay: 0.60s; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="maple-bg">🍁</div>
+  <div class="hero-eyebrow">Canadian Ethanol Industry • Policy Brief</div>
+  <h1>Protect <span>Canadian</span><br>Ethanol</h1>
+  <p class="hero-sub">How U.S. tax subsidies threaten to displace Canadian producers — and what we can do about it.</p>
+  <div class="scroll-cue">
+    <span>SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
+
+<section>
+  <div class="section-label label-challenge reveal">⚠ The Challenge</div>
+  <h2 class="section-title reveal">The U.S. <span style="color:#ff6b6b">45Z Tax Credit</span> Is an Export Subsidy</h2>
+  <p class="section-desc reveal">The U.S. Inflation Reduction Act's 45Z Clean Fuel Production Credit gives American corn ethanol producers a massive financial advantage — directly funding their ability to undercut Canadian producers in our own market.</p>
+  <div class="challenge-grid stagger">
+    <div class="credit-card">
+      <div class="credit-amount">$1<span style="font-size:0.4em">/gal</span></div>
+      <div class="credit-tag">U.S. 45Z Ethanol Credit</div>
+      <div class="credit-label" style="margin-top:16px">Up to $1 per gallon subsidy<br>for U.S. corn ethanol producers</div>
+    </div>
+    <div class="challenge-text-card">
+      <h3>🌽 Why It Matters</h3>
+      <p>This subsidy functions as a <strong style="color:white">de facto export subsidy</strong>. U.S. producers can price their ethanol aggressively in Canadian markets, making it nearly impossible for domestic Canadian producers to compete on cost alone — even with equivalent product quality and lower carbon intensity.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-label label-landscape reveal">📊 The Ethanol Landscape</div>
+  <h2 class="section-title reveal">A Decade of <span style="color:var(--gold)">U.S. Import Encroachment</span></h2>
+  <p class="section-desc reveal">Over the past 10 years, U.S. ethanol imports into Canada surged 150% to 3 billion litres — fuelled by Ontario's blending mandates, the Clean Fuel Regulation (CFR), and now the 45Z subsidy.</p>
+  <div class="bar-section reveal">
+    <div style="text-align:center; margin-bottom: 80px; position: relative; z-index: 10;">
+      <div class="growth-badge">📈 +150% U.S. import growth over 10 years</div>
+    </div>
+    <div class="bar-compare" id="barChart">
+      <div class="bar-item">
+        <div class="bar-fill bar-ca" id="barCA"><div class="bar-val">1.2B L</div></div>
+        <div class="bar-flag">🍁</div>
+        <div class="bar-label">Canadian<br>Production</div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-fill bar-us" id="barUS"><div class="bar-val">3B L</div></div>
+        <div class="bar-flag">🇺🇸</div>
+        <div class="bar-label">U.S. Ethanol<br>Imports to Canada</div>
+      </div>
+    </div>
+  </div>
+  <!--
+  <div class="timeline reveal">
+    <div class="timeline-item">
+      <div class="timeline-year">~2015</div>
+      <h4>U.S. imports to Canada used to be steady around 1.2 - 1.4 billion liters</h4>
+      <p>Provincial mandates and post-COVID fuel usage begin driving ethanol demand, opening the door for U.S. imports at scale.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2022</div>
+      <h4>Canada's Clean Fuel Regulation (CFR) Introduced</h4>
+      <p>CFR credits incentivize low-carbon fuels — but U.S. producers benefit equally, with no domestic preference built in.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2025–Present</div>
+      <h4>45Z Credit Accelerates U.S. Advantage</h4>
+      <p>The 45Z subsidy adds up to $1/gallon to U.S. producers, supercharging their export competitiveness into Canada.</p>
+    </div>
+  </div>
+    -->
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-label label-risk reveal">🚨 The Risk</div>
+  <h2 class="section-title reveal">Existential Threat to <span style="color:#ff8080">Canadian Industry</span></h2>
+  <p class="section-desc reveal">If left unaddressed, the 45Z-driven import surge poses a severe and immediate risk to the Canadian ethanol sector and the rural economy it supports.</p>
+  <div class="risk-grid stagger">
+    <div class="risk-card">
+      <div class="risk-icon">🏭</div>
+      <h4>Plant Closures</h4>
+      <p>Canadian ethanol facilities cannot survive on thin margins when U.S. competitors receive a $1/gal government top-up.</p>
+    </div>
+    <div class="risk-card">
+      <div class="risk-icon">🌽</div>
+      <h4>Farm Revenue at Risk</h4>
+      <p>Canadian ethanol plants are anchor buyers for domestic grain. Plant closures ripple directly to farmers and rural communities.</p>
+    </div>
+    <div class="risk-card">
+      <div class="risk-icon">💸</div>
+      <h4>Capital Flight</h4>
+      <p>Investment in Canadian clean fuel infrastructure will shift to the U.S. where subsidies guarantee returns.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-label label-solution reveal">✅ The Solutions</div>
+  <h2 class="section-title reveal">Two Policy Fixes. <span style="color:#5fd68a">No New Spending.</span></h2>
+  <p class="section-desc reveal">Both solutions work within Canada's existing regulatory framework — no direct government expenditure required.</p>
+  <div class="solutions-grid">
+    <div class="sol-card sol-card-1 reveal-left">
+      <div class="sol-number">01</div>
+      <div class="sol-icon">🍁</div>
+      <h3>Minimum Domestic Blending Requirement</h3>
+      <p>Mandate that a minimum percentage of ethanol blended in Canada must be of Canadian origin — protecting domestic market share regardless of import pricing pressure.</p>
+      <div class="sol-highlight">5% Minimum<br>Canadian Content</div>
+    </div>
+    <div class="sol-card sol-card-2 reveal-right">
+      <div class="sol-number">02</div>
+      <div class="sol-icon">⚡</div>
+      <h3>CFR Credit Multiplier for Canadian Ethanol</h3>
+      <p>Amend the Clean Fuel Regulation to apply a credit multiplier to domestically produced ethanol — boosting the CFR credit value for Canadian producers to offset the 45Z subsidy advantage.</p>
+      <div class="sol-highlight">Enhanced CFR<br>Credit Value</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-label label-opp reveal">🇨🇦 The Opportunity</div>
+  <h2 class="section-title reveal">What We're Fighting For</h2>
+  <p class="section-desc reveal">These policy adjustments protect far more than an industry — they safeguard Canada's energy sovereignty, rural economy, and clean fuel future.</p>
+  <div class="opp-list stagger">
+    <div class="opp-item">
+      <div class="opp-check">🛡️</div>
+      <div>
+        <h4>Canada's Food Security Future</h4>
+        <p>Ethanol production is part of Canada’s food security strategy. Only the starch in corn is used to produce ethanol, while the remaining protein, fat, and fibre are returned to the food system as high-quality animal feed. One crop produces two critical outputs: clean fuel and high-protein livestock feed.</p>
+      </div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-check">🏭</div>
+      <div>
+        <h4>Protect Canadian Ethanol Producers</h4>
+        <p>Keep Canadian ethanol plants viable and competitive in their home market. Ensure clean fuel infrastructure investment stays north of the border</p>
+      </div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-check">🚜</div>
+      <div>
+        <h4>Support Rural Jobs & Farmers</h4>
+        <p>Support a resilient local agricultural sector by ensuring Canadian farmers have strong, dependable domestic markets. Preserve thousands of jobs and grain procurement relationships in rural Canada.</p>
+      </div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-check">🌿</div>
+      <div>
+        <h4>Reduce Carbon Emissions</h4>
+        <p>Canadian ethanol has lower carbon intensity — keeping it in the blend reduces GHG output.</p>
+      </div>
+    </div>
+</section>
+
+<footer>
+  <h2>🍁 Act Now to <span>Protect</span><br>Canadian Ethanol</h2>
+  <p>REGULATORY ADJUSTMENTS TO THE CLEAN FUEL REGULATION</p>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .stagger').forEach(el => observer.observe(el));
+
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          document.getElementById('barCA').style.height = '100px';
+          document.getElementById('barUS').style.height = '210px';
+        }, 300);
+        barObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const barChart = document.getElementById('barChart');
+  if (barChart) barObserver.observe(barChart);
+</script>
+</body>
+</html>
