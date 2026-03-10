@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urea Supply Flow to Ontario</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;}
+        #map { height: 100vh; width: 100vw; position: relative; }
+        
+        .map-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 24px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .map-title h1 { margin: 0; font-size: 20px; color: #222; }
+
+        .data-source {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #444;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            border: 1px solid #ccc;
+        }
+
+        .custom-label {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #777;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            padding: 3px 6px;
+        }
+
+        .vehicle-icon {
+            font-size: 28px;
+            text-align: center;
+            line-height: 32px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
+            margin-left: -16px; 
+            margin-top: -16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info.legend {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .info.legend h4 { margin: 0 0 5px 0; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="map-title">
+        <h1>Import Routes of U.S Nitrogenous Fertilizers into Ontario</h1>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="data-source">
+        Data Source: Canadian International Merchandize Trade Application
+    </div>
+
+    <script>
+        var map = L.map('map', {zoomControl: false});
+        
+        map.fitBounds([
+            [24.0, -113.0], 
+            [48.0, -60.0]   
+        ]);
+        
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            maxZoom: 20
+        }).addTo(map);
+
+        var locations = {
+            "Mississippi": { coords: [32.3547, -89.3985], vol: 114.6 },
+            "Missouri": { coords: [37.9643, -91.8318], vol: 76.1 },
+            "Virginia": { coords: [37.3000, -77.4000], vol: 58.7 }, 
+            "Utah": { coords: [40.7000, -112.0000], vol: 51.2 }, 
+            "Texas": { coords: [29.3013, -94.7977], vol: 47.2 }, 
+            "Louisiana (NOLA)": { coords: [29.9511, -90.0715], vol: 45.7 },
+            "Iowa": { coords: [42.2000, -96.3000], vol: 34.9 }, 
+            "Ohio": { coords: [41.4993, -81.6944], vol: 17.5 }, 
+            "Illinois": { coords: [41.8781, -87.6298], vol: 12.9 }, 
+            "New York": { coords: [42.8864, -78.8781], vol: 10.8 }, 
+            "Sarnia, ON (Rail Hub)": { coords: [42.9745, -82.4066], vol: "Dest" },
+            "Hamilton, ON (Marine/Rail)": { coords: [43.2560, -79.8711], vol: "Dest" }
+        };
+
+        for (var key in locations) {
+            var isDest = locations[key].vol === "Dest";
+            var radiusSize = isDest ? 8 : Math.max(4, locations[key].vol / 8);
+            var color = isDest ? "#d9534f" : "#5bc0de";
+            var direction = 'right', offset = [radiusSize + 5, 0];
+            
+            if (key === "New York") { direction = 'top'; offset = [0, -radiusSize - 10]; }
+            else if (key === "Hamilton, ON (Marine/Rail)") { direction = 'bottom'; offset = [0, radiusSize + 10]; }
+            else if (key === "Sarnia, ON (Rail Hub)") { direction = 'left'; offset = [-radiusSize - 10, 0]; }
+            else if (key === "Texas") { direction = 'bottom'; offset = [0, radiusSize + 5]; }
+
+            L.circleMarker(locations[key].coords, {
+                radius: radiusSize, fillColor: color, color: "#333", weight: 1, fillOpacity: 0.8
+            }).addTo(map).bindTooltip(key + (isDest ? "" : " (" + locations[key].vol + "M kg)"), {
+                permanent: true, direction: direction, offset: offset, className: 'custom-label'
+            });
+        }
+
+        var routes = {
+            msDownriverBarge: [locations["Mississippi"].coords, [32.3547, -90.8779], [31.5604, -91.4032], [30.4515, -91.1871], locations["Louisiana (NOLA)"].coords],
+            nolaUpriverBarge: [locations["Louisiana (NOLA)"].coords, [30.4515, -91.1871], [35.1495, -90.0490], [38.6270, -90.1994], locations["Illinois"].coords, locations["Sarnia, ON (Rail Hub)"].coords],
+            missouriRail: [locations["Missouri"].coords, [38.6270, -90.1994], locations["Illinois"].coords, locations["Sarnia, ON (Rail Hub)"].coords],
+            nolaMarine: [locations["Louisiana (NOLA)"].coords, [28.9, -89.4], [24.5, -83.0], [24.3, -81.5], [25.0, -80.0], [27.0, -79.5], [30.0, -79.0], [35.0, -74.0], [43.5, -62.5], [46.5, -59.5], [49.0, -64.0], [48.5, -68.5], [46.8139, -71.2080], [45.5017, -73.5673], locations["Hamilton, ON (Marine/Rail)"].coords],
+            texasMarine: [locations["Texas"].coords, [28.0, -93.0], [24.5, -83.0], [24.3, -81.5], [25.0, -80.0], [27.0, -79.5], [30.0, -79.0], [35.0, -74.0], [43.5, -62.5], [46.5, -59.5], [49.0, -64.0], [48.5, -68.5], [46.8139, -71.2080], [45.5017, -73.5673], locations["Hamilton, ON (Marine/Rail)"].coords],
+            texasRail: [locations["Texas"].coords, [32.7767, -96.7970], [39.0997, -94.5786], locations["Illinois"].coords, locations["Sarnia, ON (Rail Hub)"].coords],
+            westernRail: [locations["Utah"].coords, [41.1400, -104.8202], [41.2524, -95.9980], locations["Iowa"].coords, locations["Illinois"].coords, locations["Sarnia, ON (Rail Hub)"].coords],
+            easternRail: [locations["Virginia"].coords, [39.2904, -76.6122], locations["New York"].coords, locations["Hamilton, ON (Marine/Rail)"].coords]
+        };
+
+        for (var r in routes) {
+            var style = { color: '#888', weight: 2, opacity: 0.5 };
+            if (r.includes('Barge')) style.dashArray = '5, 5';
+            else if (r.includes('Marine')) style.dashArray = '1, 3';
+            L.polyline(routes[r], style).addTo(map);
+        }
+
+        var customBargeIcon = `<svg width="50" height="18" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" style="margin-top: 6px;"><g stroke="#000" stroke-width="4" fill="#fff"><path d="M 10,20 L 15,35 L 115,35 L 115,20 L 95,20 L 90,25 L 35,25 L 30,20 Z" /><rect x="35" y="8" width="55" height="17" /><rect x="95" y="2" width="20" height="18" /><rect x="99" y="5" width="2" height="4" rx="1" fill="#000" /></g></svg>`;
+
+        function animateVehicle(routePath, iconHtml, durationMs) {
+            var marker = L.marker(routePath[0], { icon: L.divIcon({className: 'vehicle-icon', html: iconHtml, iconSize: [40, 40]}) }).addTo(map);
+            var totalPoints = routePath.length, startTimestamp = null;
+            function step(timestamp) {
+                if (!startTimestamp) startTimestamp = timestamp;
+                var progress = ((timestamp - startTimestamp) % durationMs) / durationMs; 
+                var segmentProgress = progress * (totalPoints - 1), currentIndex = Math.floor(segmentProgress), nextIndex = Math.min(currentIndex + 1, totalPoints - 1), localProgress = segmentProgress - currentIndex;
+                var lat = routePath[currentIndex][0] + (routePath[nextIndex][0] - routePath[currentIndex][0]) * localProgress;
+                var lng = routePath[currentIndex][1] + (routePath[nextIndex][1] - routePath[currentIndex][1]) * localProgress;
+                marker.setLatLng([lat, lng]); window.requestAnimationFrame(step);
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        animateVehicle(routes.msDownriverBarge, customBargeIcon, 5000); 
+        animateVehicle(routes.nolaUpriverBarge, customBargeIcon, 21000); 
+        animateVehicle(routes.missouriRail, '🚂', 5000); 
+        animateVehicle(routes.nolaMarine, '🚢', 14000);       
+        setTimeout(() => animateVehicle(routes.texasMarine, '🚢', 15000), 2000); 
+        setTimeout(() => animateVehicle(routes.texasRail, '🚂', 12000), 1000);   
+        animateVehicle(routes.westernRail, '🚂', 9000);       
+        animateVehicle(routes.easternRail, '🚂', 4000);       
+
+        var legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = '<h4>Transport Legend</h4>' +
+                '<span style="display: inline-block; width: 20px; height: 2px; background: #888; margin-right: 5px;"></span> Rail Route (Solid)<br>' +
+                '<span style="display: inline-block; width: 20px; height: 2px; background: #888; margin-right: 5px; border-top: 1px dashed #888;"></span> Barge Route (Dashed)<br>' +
+                '<span style="display: inline-block; width: 20px; height: 2px; background: #888; margin-right: 5px; border-top: 1px dotted #888;"></span> Ship Route (Dotted)<br><br>' +
+                '🚂 Rail Transport<br><div style="display:flex; align-items:center;">' + customBargeIcon + '&nbsp;Barge</div>🚢 Ship Transport';
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
