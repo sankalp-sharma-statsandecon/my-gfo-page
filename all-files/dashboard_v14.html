@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fertilizer & Fuel Margin Dashboard - Interactive Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { background-color: #022c22; color: #f8fafc; font-family: 'Inter', sans-serif; overflow-y: auto; overflow-x: hidden; }
+        .card { background-color: #064e3b; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: #065f46; height: 6px; border-radius: 5px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #34d399; cursor: pointer; border-radius: 50%; border: 2px solid #022c22; transition: transform 0.1s ease-in-out; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .negative { color: #ef4444; }
+        .positive { color: #10b981; }
+        #reset-btn { font-size: 0.875rem; }
+        #reset-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248,0.5); }
+        
+        /* Custom Leaflet Popup Styling to match Dark Mode */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            width: auto !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button {
+            color: #6ee7b7;
+            font-size: 20px;
+            padding: 4px 8px;
+            right: 8px;
+            top: 8px;
+            z-index: 100;
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #022c22; }
+        ::-webkit-scrollbar-thumb { background: #065f46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="min-h-screen w-full flex flex-col p-4 lg:p-6 box-border">
+    
+    <div class="flex flex-col gap-6 w-[98%] max-w-screen-2xl mx-auto">
+        
+        <div class="flex flex-col lg:flex-row gap-6 h-[80vh]">
+            <div class="w-full lg:w-[40%] flex flex-col gap-2 overflow-y-auto pr-2 pb-2">
+                <header class="mb-1 flex flex-col 2xl:flex-row justify-between items-start gap-2">
+                    <div class="flex-1 pr-2">
+                        <h1 class="text-lg font-bold text-emerald-400 leading-tight">Fertilizer and Fuel - Margin Impact Dashboard</h1>
+                        <div class="mt-1 inline-block bg-emerald-900 border border-emerald-700 rounded-lg px-3 py-0.5 shadow-md">
+                            <span class="text-emerald-100 font-medium text-xs">Baseline:</span> <span id="baseline-display" class="text-sm font-bold text-emerald-400">$357.68</span><span class="text-xs text-emerald-200">/ac</span>
+                        </div>
+                    </div>
+                    <button id="reset-btn" class="bg-emerald-800 hover:bg-emerald-700 text-slate-100 px-3 py-1.5 rounded shadow text-xs whitespace-nowrap transition">Reset Dashboard</button>
+                </header>
+
+                <div class="flex gap-3 w-full">
+                    <div class="card bg-gradient-to-br from-emerald-900 to-emerald-950 border border-emerald-800 py-3 px-3 flex-1">
+                        <div class="text-center">
+                            <p class="text-[10px] text-emerald-200 mb-1 uppercase tracking-wide font-semibold">Margin Change</p>
+                            <p id="margin-change" class="text-3xl font-bold transition-all duration-500 text-white">$0.00</p>
+                            <div class="mt-1.5">
+                                <div id="status-chip" class="inline-block px-2 py-0.5 rounded-full bg-emerald-800 text-[10px] font-semibold">Baseline</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card bg-gradient-to-br from-emerald-900 to-emerald-950 border border-emerald-800 py-3 px-3 flex-1">
+                        <div class="text-center">
+                            <p class="text-[10px] text-emerald-200 mb-1 uppercase tracking-wide font-semibold">New Input Cost/Acre</p>
+                            <p id="new-margin" class="text-3xl font-bold text-white">$357.68</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card space-y-2 flex-shrink-0">
+                    <h2 class="text-sm font-semibold mb-2 flex items-center gap-1.5 border-b border-emerald-800 pb-1">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                        Fertilizer Prices ($/T)
+                    </h2>
+
+                    <div class="mb-2">
+                        <label class="text-[10px] text-emerald-200 uppercase tracking-wide font-semibold block mb-1">Nitrogen Source</label>
+                        <div id="n-toggle" class="inline-flex bg-emerald-800 rounded-full p-1">
+                            <label for="uan_radio" id="lbl-uan" class="cursor-pointer px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500 text-white">
+                                UAN-28
+                                <input type="radio" id="uan_radio" name="n_source" value="uan" class="sr-only" checked>
+                            </label>
+                            <label for="urea_radio" id="lbl-urea" class="cursor-pointer px-2.5 py-0.5 rounded-full text-[10px] font-medium text-emerald-100">
+                                Urea
+                                <input type="radio" id="urea_radio" name="n_source" value="urea" class="sr-only">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="uan_container">
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="text-xs font-medium">UAN-28</label>
+                            <div class="text-right">
+                                <div id="val-uan" class="text-emerald-400 font-mono text-xs leading-none">$740/T</div>
+                                <div id="cost-uan" class="text-[10px] font-bold text-emerald-400 mt-0.5 bg-emerald-900/80 px-1.5 py-0.5 rounded inline-block">$163/ac</div>
+                            </div>
+                        </div>
+                        <input type="range" id="uan" min="400" max="1500" value="740" step="1">
+                    </div>
+
+                    <div id="urea_container" class="hidden">
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="text-xs font-medium">Urea</label>
+                            <div class="text-right">
+                                <div id="val-urea" class="text-emerald-400 font-mono text-xs leading-none">$1055/T</div>
+                                <div id="cost-urea" class="text-[10px] font-bold text-emerald-400 mt-0.5 bg-emerald-900/80 px-1.5 py-0.5 rounded inline-block">$141/ac</div>
+                            </div>
+                        </div>
+                        <input type="range" id="urea" min="600" max="2000" value="1055" step="1">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="text-xs font-medium">MAP (P)</label>
+                            <div class="text-right">
+                                <div id="val-map" class="text-emerald-400 font-mono text-xs leading-none">$1350/T</div>
+                                <div id="cost-map" class="text-[10px] font-bold text-emerald-400 mt-0.5 bg-emerald-900/80 px-1.5 py-0.5 rounded inline-block">$94/ac</div>
+                            </div>
+                        </div>
+                        <input type="range" id="map-input" min="800" max="2500" value="1350" step="1">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="text-xs font-medium">Potash (K)</label>
+                            <div class="text-right">
+                                <div id="val-potash" class="text-emerald-400 font-mono text-xs leading-none">$750/T</div>
+                                <div id="cost-potash" class="text-[10px] font-bold text-emerald-400 mt-0.5 bg-emerald-900/80 px-1.5 py-0.5 rounded inline-block">$30/ac</div>
+                            </div>
+                        </div>
+                        <input type="range" id="potash" min="400" max="1500" value="750" step="1">
+                    </div>
+                </div>
+
+                <div class="card space-y-2 flex-shrink-0">
+                    <h2 class="text-sm font-semibold mb-2 flex items-center gap-1.5 border-b border-emerald-800 pb-1">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Diesel Fuel (On-Farm and Trucking)
+                    </h2>
+
+                    <div class="pt-0">
+                        <div class="flex justify-between items-end mb-1">
+                            <label class="text-xs font-medium">Price per Litre</label>
+                            <div class="text-right">
+                                <div id="val-fuel" class="text-emerald-400 font-mono text-xs leading-none">177.66 ¢/L</div>
+                                <div id="cost-fuel" class="text-[10px] font-bold text-emerald-400 mt-0.5 bg-emerald-900/80 px-1.5 py-0.5 rounded inline-block">$71/ac</div>
+                            </div>
+                        </div>
+                        <input type="range" id="fuel" min="100" max="300" value="177.66" step="0.1">
+                    </div>
+
+                    <div class="bg-emerald-950/50 p-1.5 rounded-lg mt-1 flex justify-between items-center">
+                        <p class="text-[10px] uppercase tracking-wider text-emerald-600">Usage Assumption</p>
+                        <p class="text-xs font-semibold text-emerald-100">40 L/ac</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full lg:w-[60%] h-[50vh] lg:h-full relative bg-emerald-900 rounded-xl overflow-hidden border border-emerald-800 shadow-xl">
+                <div id="map-container" class="absolute inset-0 z-0"></div>
+                
+                <div class="absolute top-4 right-4 z-[400] flex flex-col gap-2 items-end">
+                    <div class="bg-emerald-950/90 backdrop-blur border border-emerald-800 p-3 rounded-lg shadow-lg pointer-events-none">
+                        <h3 class="font-bold text-emerald-400 text-xs uppercase tracking-wide mb-1">Fertilizer Impact by District</h3>
+                        <p class="text-[10px] text-emerald-200">Click a region to view dynamic usages & costs (corn, soybean and wheat only).</p>
+                    </div>
+                    <button onclick="map.closePopup(); map.flyToBounds(initialBounds, {padding: [30,30], duration: 0.8})" class="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-lg border border-emerald-600 transition-all whitespace-nowrap flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Reset Map
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full card mb-8 bg-gradient-to-r from-emerald-900 to-emerald-950 flex-shrink-0">
+            <h2 class="text-base font-bold text-emerald-400 mb-3 uppercase tracking-wide border-b border-emerald-800 pb-1.5">Province-Wide Summary</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-emerald-800 text-emerald-100 text-xs uppercase tracking-wider">
+                            <th class="p-2.5 rounded-tl-lg">Metric</th>
+                            <th class="p-2.5">Nitrogen (N)</th>
+                            <th class="p-2.5">Phosphorus (P₂O₅)</th>
+                            <th class="p-2.5">Potassium (K₂O)</th>
+                            <th class="p-2.5 rounded-tr-lg">Total Combined Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-emerald-800/50 hover:bg-emerald-800/30">
+                            <td class="p-2.5 font-semibold text-emerald-200 text-xs">Raw Nutrient Requirements</td>
+                            <td class="p-2.5 font-mono text-xs">186,237 T</td>
+                            <td class="p-2.5 font-mono text-xs">151,977 T</td>
+                            <td class="p-2.5 font-mono text-xs">180,214 T</td>
+                            <td class="p-2.5 text-emerald-500 font-bold">-</td>
+                        </tr>
+                        <tr class="hover:bg-emerald-800/30">
+                            <td class="p-2.5 font-semibold text-emerald-200 text-xs">Applied Commercial Fertilizer</td>
+                            <td class="p-2.5 font-mono text-sm" id="prov-n-val">550,356 T <span class="text-[10px] text-violet-400 block" id="prov-n-label">UAN-28</span></td>
+                            <td class="p-2.5 font-mono text-sm">292,277 T <span class="text-[10px] text-amber-400 block">MAP (11-52-0)</span></td>
+                            <td class="p-2.5 font-mono text-sm">300,365 T <span class="text-[10px] text-rose-400 block">Potash (0-0-60)</span></td>
+                            <td class="p-2.5 font-mono font-bold text-xl text-white tracking-tight" id="prov-cost-val">$927,087,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-[10px] text-gray-300 mt-2">*Summary totals reflect aggregate values across all 15 GFO districts for Corn, Soybeans, and Winter Wheat acres seeded.</p>
+            <p class = "text-[10px] text-gray-300">**Nutrient requirements are based on OMAFA crop budgets and average yields by district, while costs are calculated using the user-selected fertilizer prices (baseline prices from Bloomberg Green Markets, 2026) and usage assumptions.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // Formatting helpers
+        const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+        const formatNumber = (val) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val);
+
+        // --- 1. DASHBOARD LOGIC (Left Side) ---
+        // Conversion rates to match the baseline cost calculations exactly
+        const rates = { uan: 0.219937, urea: 0.133875, map: 0.069263, potash: 0.040468, fuel: 40.0 };
+        const base = { total: 357.68 };
+
+        const inputs = ['uan', 'urea', 'map-input', 'potash', 'fuel'];
+        const elements = {};
+        inputs.forEach(id => { elements[id] = document.getElementById(id); });
+        const radios = document.querySelectorAll('input[name="n_source"]');
+
+        const marginChangeEl = document.getElementById('margin-change');
+        const newMarginEl = document.getElementById('new-margin');
+        const statusChip = document.getElementById('status-chip');
+        let ignoreMargin = true; // Start as true so first update shows baseline
+
+        // Function to calculate baseline cost based on selected nitrogen source
+        function calculateBaselineTotal() {
+            const isUan = document.getElementById('uan_radio').checked;
+            const costN = isUan ? (740 * rates.uan) : (1055 * rates.urea);
+            const costP = 1350 * rates.map;
+            const costK = 750 * rates.potash;
+            const costFuel = (177.66 / 100) * rates.fuel;
+            base.total = costN + costP + costK + costFuel;
+            // Update the baseline display
+            document.getElementById('baseline-display').innerText = `$${base.total.toFixed(2)}`;
+        }
+
+        function resetMapPotash() {
+            elements['map-input'].value = 1350;
+            elements['potash'].value = 750;
+        }
+
+        radios.forEach(r => r.addEventListener('change', () => {
+            ignoreMargin = true;
+            calculateBaselineTotal();
+            resetMapPotash();
+            updateToggleLabels();
+            update();
+        }));
+
+        function updateToggleLabels() {
+            const uanChecked = document.getElementById('uan_radio').checked;
+            document.getElementById('lbl-uan').classList.toggle('bg-emerald-500', uanChecked);
+            document.getElementById('lbl-uan').classList.toggle('text-white', uanChecked);
+            document.getElementById('lbl-uan').classList.toggle('text-emerald-100', !uanChecked);
+            document.getElementById('lbl-urea').classList.toggle('bg-emerald-500', !uanChecked);
+            document.getElementById('lbl-urea').classList.toggle('text-white', !uanChecked);
+            document.getElementById('lbl-urea').classList.toggle('text-emerald-100', uanChecked);
+        }
+        updateToggleLabels();
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            document.querySelector('input[name="n_source"][value="uan"]').checked = true;
+            elements['uan'].value = 740;
+            elements['urea'].value = 1055;
+            elements['map-input'].value = 1350;
+            elements['potash'].value = 750;
+            elements['fuel'].value = 177.66;
+            ignoreMargin = true;
+            calculateBaselineTotal();
+            updateToggleLabels();
+            update();
+        });
+
+        // Exact tonnages calculated for each district
+        const districtData = {
+            "District 1 - Essex": { rawN: "6,169", rawP: "7,716", rawK: "9,642", uan: 16205, map: 14839, potash: 16070 },
+            "District 2 - Kent": { rawN: "18,505", rawP: "15,306", rawK: "16,017", uan: 54530, map: 29435, potash: 26696 },
+            "District 3 - Lambton": { rawN: "10,696", rawP: "10,426", rawK: "11,869", uan: 30326, map: 20050, potash: 19782 },
+            "District 4 - Middlesex": { rawN: "15,599", rawP: "11,321", rawK: "10,906", uan: 47158, map: 21773, potash: 18177 },
+            "District 5 - Elgin, Norfolk": { rawN: "15,236", rawP: "11,822", rawK: "11,927", uan: 45487, map: 22736, potash: 19879 },
+            "District 6 - Haldimand, Brant, Hamilton, Niagara": { rawN: "10,810", rawP: "10,329", rawK: "12,242", uan: 30807, map: 19864, potash: 20404 },
+            "District 7 - Waterloo, Oxford": { rawN: "11,306", rawP: "6,502", rawK: "6,020", uan: 35468, map: 12504, potash: 10034 },
+            "District 8 - Huron": { rawN: "19,884", rawP: "15,143", rawK: "16,884", uan: 59577, map: 29122, potash: 28141 },
+            "District 9 - Perth": { rawN: "12,010", rawP: "8,470", rawK: "12,318", uan: 36499, map: 16290, potash: 20530 },
+            "District 10 - Grey, Bruce, Wellington": { rawN: "15,514", rawP: "12,965", rawK: "16,349", uan: 45617, map: 24933, potash: 27249 },
+            "District 11 - Dufferin, Simcoe, Halton, Peel, York": { rawN: "11,746", rawP: "11,009", rawK: "14,449", uan: 33634, map: 21173, potash: 24082 },
+            "District 12 - Durham, Northumberland, Kawartha, Peterborough, Hastings": { rawN: "12,043", rawP: "9,366", rawK: "11,640", uan: 35937, map: 18012, potash: 19400 },
+            "District 13 - Prince Edward, Lennox, Addington, Frontenac, Lanark, Leeds, Grenville, Renfrew, Ottawa": { rawN: "10,633", rawP: "8,539", rawK: "13,257", uan: 31525, map: 16423, potash: 22096 },
+            "District 14 - Prescott, Russell, Stormont, Dundas, Glengarry": { rawN: "15,124", rawP: "12,154", rawK: "15,395", uan: 44834, map: 23374, potash: 25659 },
+            "District 15 - Northern Ontario": { rawN: "962", rawP: "909", rawK: "1,299", uan: 2752, map: 1749, potash: 2166 }
+        };
+
+        function update() {
+            const isUan = document.querySelector('input[name="n_source"]:checked').value === 'uan';
+            
+            // Toggle visibility of sliders
+            document.getElementById('uan_container').style.display = isUan ? 'block' : 'none';
+            document.getElementById('urea_container').style.display = isUan ? 'none' : 'block';
+            
+            const prices = {
+                uan: parseFloat(elements['uan'].value),
+                urea: parseFloat(elements['urea'].value),
+                map: parseFloat(elements['map-input'].value),
+                potash: parseFloat(elements['potash'].value),
+                fuel: parseFloat(elements['fuel'].value) / 100
+            };
+
+            // Calculate per-acre costs for Left Panel
+            const costN = isUan ? (prices.uan * rates.uan) : (prices.urea * rates.urea);
+            const costP = prices.map * rates.map;
+            const costK = prices.potash * rates.potash;
+            const costFuel = prices.fuel * rates.fuel;
+            const newTotal = costN + costP + costK + costFuel;
+
+            document.getElementById('val-uan').innerText = `$${prices.uan}/T`;
+            document.getElementById('cost-uan').innerText = `Cost: $${costN.toFixed(2)}/ac`;
+            document.getElementById('val-urea').innerText = `$${prices.urea}/T`;
+            document.getElementById('cost-urea').innerText = `Cost: $${costN.toFixed(2)}/ac`;
+            document.getElementById('val-map').innerText = `$${prices.map}/T`;
+            document.getElementById('cost-map').innerText = `Cost: $${costP.toFixed(2)}/ac`;
+            document.getElementById('val-potash').innerText = `$${prices.potash}/T`;
+            document.getElementById('cost-potash').innerText = `Cost: $${costK.toFixed(2)}/ac`;
+            document.getElementById('val-fuel').innerText = `${(prices.fuel * 100).toFixed(2)} ¢/L`;
+            document.getElementById('cost-fuel').innerText = `Cost: $${costFuel.toFixed(2)}/ac`;
+
+            if (ignoreMargin) {
+                marginChangeEl.innerText = `$0.00`;
+                marginChangeEl.className = 'text-3xl font-bold';
+                statusChip.innerText = 'Baseline Maintained';
+                statusChip.className = 'inline-block px-2 py-0.5 rounded-full bg-emerald-800 text-[10px] font-semibold';
+                if(newMarginEl) newMarginEl.innerText = `$${base.total.toFixed(2)}`;
+                ignoreMargin = false;
+            } else {
+                const marginDiff = base.total - newTotal;
+                if(newMarginEl) newMarginEl.innerText = `$${newTotal.toFixed(2)}`;
+
+                if (marginDiff > 0.01) {
+                    marginChangeEl.innerText = `+$${Math.abs(marginDiff).toFixed(2)}`;
+                    marginChangeEl.className = 'text-3xl font-bold positive';
+                    statusChip.innerText = 'Increased Margin';
+                    statusChip.className = 'inline-block px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-semibold';
+                } else if (marginDiff < -0.01) {
+                    marginChangeEl.innerText = `-$${Math.abs(marginDiff).toFixed(2)}`;
+                    marginChangeEl.className = 'text-3xl font-bold negative';
+                    statusChip.innerText = 'Decreased Margin';
+                    statusChip.className = 'inline-block px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-semibold';
+                } else {
+                    marginChangeEl.innerText = `$0.00`;
+                    marginChangeEl.className = 'text-3xl font-bold text-white';
+                    statusChip.innerText = 'Baseline Maintained';
+                    statusChip.className = 'inline-block px-2 py-0.5 rounded-full bg-emerald-800 text-[10px] font-semibold';
+                }
+            }
+
+            // --- Real-time Map & Table Updates ---
+            let provCost = 0;
+            let provNTotal = 0;
+
+            // Iterate through our district data to calculate aggregate totals and update popups
+            Object.keys(districtData).forEach(name => {
+                const data = districtData[name];
+                const match = name.match(/District (\d+)/i);
+                const districtNum = match ? match[1] : '';
+
+                const n_tonnage = isUan ? data.uan : (data.uan * (28.0 / 46.0));
+                provNTotal += n_tonnage;
+
+                const cost = (n_tonnage * (isUan ? prices.uan : prices.urea)) + 
+                             (data.map * prices.map) + 
+                             (data.potash * prices.potash);
+                provCost += cost;
+
+                // Update DOM elements if this specific popup happens to be open
+                const popupCostEl = document.getElementById(`popup-cost-${districtNum}`);
+                if (popupCostEl) popupCostEl.innerText = formatCurrency(cost);
+
+                const popupNLabel = document.getElementById(`popup-n-label-${districtNum}`);
+                if (popupNLabel) popupNLabel.innerText = isUan ? 'UAN-28' : 'Urea';
+
+                const popupNVal = document.getElementById(`popup-n-val-${districtNum}`);
+                if (popupNVal) popupNVal.innerText = formatNumber(n_tonnage) + ' T';
+            });
+
+            // Update Province Table
+            document.getElementById('prov-cost-val').innerText = formatCurrency(provCost);
+            document.getElementById('prov-n-val').innerHTML = `${formatNumber(provNTotal)} T <span class="text-[10px] text-violet-400 block" id="prov-n-label">${isUan ? 'UAN-28' : 'Urea'}</span>`;
+        }
+
+        inputs.forEach(id => elements[id].addEventListener('input', update));
+
+        // --- 2. LEAFLET MAP LOGIC (Right Side) ---
+        const map = L.map('map-container', { zoomControl: false }).setView([44.5, -80.0], 6);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd', maxZoom: 20
+        }).addTo(map);
+
+        // KML Boundary Data
+        const kmlData = {"type": "FeatureCollection", "features": [
+            {"type": "Feature", "properties": {"name": "District 1 - Essex"}, "geometry": {"type": "Polygon", "coordinates": [[[-82.463379, 42.060509], [-82.457886, 42.175617], [-82.43866, 42.191899], [-82.43042, 42.348395], [-82.459259, 42.314893], [-82.500458, 42.306769], [-82.565002, 42.315908], [-82.720184, 42.296612], [-82.942658, 42.34535], [-83.067627, 42.31794], [-83.110199, 42.258], [-83.108826, 42.170528], [-83.119812, 42.136932], [-83.110199, 42.083955], [-83.117065, 42.050312], [-83.014069, 42.023793], [-82.926178, 41.977869], [-82.814941, 41.998284], [-82.710571, 42.031954], [-82.611694, 42.030934], [-82.55127, 41.993181], [-82.511444, 41.907387], [-82.501831, 41.985015], [-82.486725, 42.031954], [-82.463379, 42.060509]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 2 - Kent"}, "geometry": {"type": "Polygon", "coordinates": [[[-81.834412, 42.646081], [-82.01294, 42.650122], [-82.025299, 42.629412], [-82.247772, 42.631938], [-82.248482, 42.625892], [-82.483978, 42.633959], [-82.475049, 42.6087], [-82.478816, 42.597076], [-82.467739, 42.585068], [-82.438169, 42.583614], [-82.401413, 42.527756], [-82.448939, 42.48462], [-82.41907, 42.489462], [-82.412392, 42.461494], [-82.417294, 42.446507], [-82.412876, 42.393395], [-82.43042, 42.348395], [-82.43866, 42.191899], [-82.457886, 42.175617], [-82.463379, 42.060509], [-82.424398, 42.101612], [-82.381466, 42.130264], [-82.199707, 42.193934], [-82.159058, 42.218554], [-82.087882, 42.251169], [-82.019294, 42.265398], [-81.846337, 42.25104], [-81.840879, 42.277323], [-81.832633, 42.348359], [-81.807236, 42.391993], [-81.724087, 42.433574], [-81.66481, 42.474123], [-81.836472, 42.607179], [-81.834412, 42.646081]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 3 - Lambton"}, "geometry": {"type": "Polygon", "coordinates": [[[-81.760254, 43.319183], [-81.860283, 43.256992], [-81.984824, 43.206691], [-82.019656, 43.21411], [-82.01735, 43.184506], [-82.031518, 43.162912], [-82.105028, 43.107635], [-82.148259, 43.09443], [-82.152304, 43.074698], [-82.175567, 43.058977], [-82.230302, 43.03555], [-82.303556, 43.030007], [-82.41394, 43.00063], [-82.415528, 42.966712], [-82.447217, 42.932977], [-82.472046, 42.861569], [-82.479, 42.813356], [-82.466731, 42.777231], [-82.510757, 42.63901], [-82.519766, 42.612548], [-82.539752, 42.604275], [-82.580398, 42.562467], [-82.596389, 42.548602], [-82.617872, 42.556989], [-82.649845, 42.5515], [-82.680807, 42.5223], [-82.596053, 42.491596], [-82.448939, 42.48462], [-82.401413, 42.527756], [-82.438169, 42.583614], [-82.467739, 42.585068], [-82.478816, 42.597076], [-82.475049, 42.6087], [-82.483978, 42.633959], [-82.248482, 42.625892], [-82.247772, 42.631938], [-82.025299, 42.629412], [-82.01294, 42.650122], [-81.834412, 42.646081], [-81.834412, 42.84073], [-81.789093, 42.806484], [-81.780853, 43.063871], [-81.808319, 43.067884], [-81.760254, 43.319183]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 4 - Middlesex"}, "geometry": {"type": "Polygon", "coordinates": [[[-80.901473, 42.912395], [-80.92392, 42.99159], [-80.987091, 42.980539], [-81.014557, 43.052834], [-81.03653, 43.047816], [-81.129913, 43.232197], [-81.22467, 43.203174], [-81.427918, 43.295199], [-81.47049, 43.288202], [-81.464996, 43.269206], [-81.776733, 43.2382], [-81.808319, 43.067884], [-81.780853, 43.063871], [-81.789093, 42.806484], [-81.834412, 42.84073], [-81.836472, 42.607179], [-81.412357, 42.79868], [-81.107325, 42.88096], [-80.901473, 42.912395]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 5 - Elgin, Norfolk"}, "geometry": {"type": "Polygon", "coordinates": [[[-81.66481, 42.474123], [-81.624985, 42.496403], [-81.559589, 42.546118], [-81.52099, 42.568939], [-81.496186, 42.579837], [-81.465884, 42.582639], [-81.46073, 42.595386], [-81.440465, 42.604088], [-81.399193, 42.605497], [-81.353597, 42.640645], [-81.317255, 42.653306], [-81.273332, 42.657356], [-81.251353, 42.663411], [-81.212841, 42.659287], [-81.197574, 42.664148], [-81.158746, 42.66268], [-81.032843, 42.659445], [-81.010371, 42.653915], [-80.994211, 42.659989], [-80.935698, 42.66187], [-80.837807, 42.65217], [-80.806872, 42.637687], [-80.805382, 42.64408], [-80.785904, 42.642651], [-80.720936, 42.619304], [-80.647582, 42.588273], [-80.610926, 42.579311], [-80.574277, 42.577415], [-80.509232, 42.573338], [-80.391565, 42.579122], [-80.151223, 42.537886], [-80.042801, 42.548994], [-80.133037, 42.566832], [-80.24528, 42.569409], [-80.296816, 42.607887], [-80.354547, 42.587162], [-80.39991, 42.597754], [-80.423365, 42.599198], [-80.438001, 42.582872], [-80.456512, 42.615027], [-80.422735, 42.646934], [-80.396337, 42.661203], [-80.386115, 42.65892], [-80.37665, 42.660401], [-80.354999, 42.649186], [-80.332979, 42.64894], [-80.326083, 42.692916], [-80.316098, 42.705087], [-80.291998, 42.720347], [-80.283617, 42.72968], [-80.273026, 42.73624], [-80.264882, 42.750879], [-80.248578, 42.75797], [-80.239304, 42.763581], [-80.236544, 42.771783], [-80.230326, 42.778109], [-80.216501, 42.783704], [-80.197072, 42.782284], [-80.173292, 42.788004], [-80.151118, 42.78582], [-80.140406, 42.785981], [-80.129268, 42.786798], [-80.127008, 42.787174], [-80.125951, 42.788746], [-80.132803, 42.788175], [-80.159997, 42.869372], [-80.173898, 42.867102], [-80.175601, 42.874653], [-80.168694, 42.876166], [-80.172726, 42.888273], [-80.167047, 42.88934], [-80.17147, 42.904584], [-80.147307, 42.908402], [-80.184889, 43.010815], [-80.243462, 43.032361], [-80.369647, 43.019161], [-80.372765, 43.013836], [-80.539147, 42.98987], [-80.504987, 42.88337], [-80.618953, 42.867333], [-80.703437, 42.856376], [-80.701425, 42.848046], [-80.717998, 42.827337], [-80.727769, 42.846606], [-80.748003, 42.827735], [-80.761704, 42.846392], [-80.882597, 42.829319], [-80.901473, 42.912395], [-81.107325, 42.88096], [-81.412357, 42.79868], [-81.836472, 42.607179], [-81.66481, 42.474123]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 6 - Haldimand, Brant, Hamilton, Niagara"}, "geometry": {"type": "Polygon", "coordinates": [[[-80.147307, 42.908402], [-80.17147, 42.904584], [-80.167047, 42.88934], [-80.172726, 42.888273], [-80.168694, 42.876166], [-80.175601, 42.874653], [-80.173898, 42.867102], [-80.159997, 42.869372], [-80.132803, 42.788175], [-80.125951, 42.788746], [-80.07175, 42.788568], [-80.02817, 42.806603], [-79.984589, 42.790362], [-79.965995, 42.808687], [-79.909999, 42.818852], [-79.889706, 42.812887], [-79.698537, 42.857395], [-79.635997, 42.837421], [-79.5767, 42.859796], [-79.54881, 42.838012], [-79.531403, 42.852813], [-79.483343, 42.842361], [-79.457251, 42.873193], [-79.39827, 42.87314], [-79.383878, 42.861976], [-79.34649, 42.859396], [-79.336033, 42.87216], [-79.277222, 42.870483], [-79.189939, 42.866256], [-79.154838, 42.874075], [-79.125848, 42.861514], [-79.098122, 42.834355], [-79.078865, 42.843643], [-79.09258, 42.858354], [-79.077464, 42.864702], [-79.062348, 42.856956], [-79.034794, 42.873507], [-79.007146, 42.868351], [-78.993038, 42.878163], [-78.959314, 42.879655], [-78.924803, 42.886643], [-78.910675, 42.906651], [-78.907339, 42.934378], [-78.934218, 42.957061], [-78.966713, 42.959116], [-79.024165, 42.995269], [-79.01123, 43.064857], [-79.080425, 43.083647], [-79.062335, 43.103489], [-79.046974, 43.147391], [-79.051932, 43.265226], [-79.142385, 43.25795], [-79.196636, 43.229529], [-79.215171, 43.241113], [-79.248786, 43.211658], [-79.331784, 43.182173], [-79.429152, 43.202218], [-79.51973, 43.197167], [-79.707784, 43.239642], [-79.746597, 43.246721], [-79.768941, 43.261795], [-79.821901, 43.28592], [-79.933087, 43.26884], [-79.918042, 43.309327], [-80.037999, 43.398423], [-80.160835, 43.375582], [-80.219752, 43.36775], [-80.21392, 43.340095], [-80.246201, 43.336665], [-80.237936, 43.306853], [-80.468414, 43.262825], [-80.438642, 43.178189], [-80.608357, 43.150848], [-80.539147, 42.98987], [-80.372765, 43.013836], [-80.369647, 43.019161], [-80.243462, 43.032361], [-80.213873, 43.02216], [-80.184889, 43.010815], [-80.147307, 42.908402]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 7 - Waterloo, Oxford"}, "geometry": {"type": "Polygon", "coordinates": [[[-81.129913, 43.232197], [-81.03653, 43.047816], [-81.014557, 43.052834], [-80.987091, 42.980539], [-80.92392, 42.99159], [-80.882597, 42.829319], [-80.761704, 42.846392], [-80.748003, 42.827735], [-80.727769, 42.846606], [-80.717998, 42.827337], [-80.701425, 42.848046], [-80.703437, 42.856376], [-80.504987, 42.88337], [-80.539147, 42.98987], [-80.608357, 43.150848], [-80.438642, 43.178189], [-80.468414, 43.262825], [-80.237936, 43.306853], [-80.246201, 43.336665], [-80.21392, 43.340095], [-80.219752, 43.36775], [-80.231094, 43.393573], [-80.269944, 43.387323], [-80.303788, 43.471308], [-80.38051, 43.542324], [-80.374892, 43.568006], [-80.381966, 43.563675], [-80.557453, 43.690064], [-80.587666, 43.669008], [-80.610941, 43.591031], [-80.754532, 43.647959], [-80.867137, 43.497396], [-80.792937, 43.467164], [-80.736465, 43.407043], [-80.734406, 43.354143], [-81.129913, 43.232197]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 8 - Huron"}, "geometry": {"type": "Polygon", "coordinates": [[[-81.776733, 43.2382], [-81.464996, 43.269206], [-81.47049, 43.288202], [-81.427918, 43.295199], [-81.356506, 43.265206], [-81.252136, 43.399061], [-81.414185, 43.468868], [-81.362, 43.538594], [-81.285095, 43.502745], [-81.188965, 43.630111], [-81.13678, 43.606251], [-81.02417, 43.76316], [-81.098328, 43.792907], [-81.092834, 43.806783], [-80.9198, 43.82462], [-80.971985, 43.986886], [-81.362, 43.933506], [-81.389465, 43.911745], [-81.754761, 44.059959], [-81.738935, 44.030667], [-81.725888, 43.928286], [-81.722815, 43.824059], [-81.722478, 43.766382], [-81.732788, 43.697665], [-81.704593, 43.536509], [-81.720366, 43.474866], [-81.71622, 43.425344], [-81.711446, 43.393813], [-81.720404, 43.364279], [-81.760254, 43.319183], [-81.776733, 43.2382]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 9 - Perth"}, "geometry": {"type": "Polygon", "coordinates": [[[-80.9198, 43.82462], [-81.092834, 43.806783], [-81.098328, 43.792907], [-81.02417, 43.76316], [-81.13678, 43.606251], [-81.188965, 43.630111], [-81.285095, 43.502745], [-81.362, 43.538594], [-81.414185, 43.468868], [-81.252136, 43.399061], [-81.356506, 43.265206], [-81.22467, 43.203174], [-80.734406, 43.354143], [-80.736465, 43.407043], [-80.792937, 43.467164], [-80.867137, 43.497396], [-80.754532, 43.647959], [-80.873108, 43.698658], [-80.759125, 43.844432], [-80.9198, 43.82462]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 10 - Grey, Bruce, Wellington"}, "geometry": {"type": "Polygon", "coordinates": [[[-80.5795118070073, 44.6110288761241], [-80.618832, 44.636249], [-80.638254, 44.723131], [-80.749689, 44.725569], [-80.857599, 44.672077], [-80.888383, 44.636223], [-80.941765, 44.573921], [-80.920911, 44.638826], [-80.89411, 44.722022], [-80.878732, 44.850572], [-80.977743, 44.908966], [-81.022421, 44.902953], [-80.963525, 44.957234], [-81.005166, 44.972419], [-81.083707, 44.926557], [-81.118292, 44.962312], [-81.207826, 44.963054], [-81.193016, 45.002645], [-81.251367, 45.007984], [-81.287842, 45.118115], [-81.323221, 45.133433], [-81.331156, 45.175871], [-81.284161, 45.220231], [-81.292077, 45.237499], [-81.468448, 45.237973], [-81.661377, 45.261355], [-81.736067, 45.215875], [-81.596881, 45.175943], [-81.523835, 45.097184], [-81.383972, 44.904523], [-81.298246, 44.802398], [-81.285667, 44.722071], [-81.317015, 44.68857], [-81.290607, 44.667752], [-81.2906062943192, 44.667751443317], [-81.281261, 44.660378], [-81.273, 44.616552], [-81.377205, 44.505418], [-81.415205, 44.431888], [-81.491018, 44.418087], [-81.603699, 44.323848], [-81.610734, 44.231302], [-81.649893, 44.169299], [-81.754761, 44.059959], [-81.389465, 43.911745], [-81.362, 43.933506], [-80.971985, 43.986886], [-80.9198, 43.82462], [-80.759125, 43.844432], [-80.873108, 43.698658], [-80.754532, 43.647959], [-80.610941, 43.591031], [-80.587666, 43.669008], [-80.557453, 43.690064], [-80.381966, 43.563675], [-80.374892, 43.568006], [-80.38051, 43.542324], [-80.303788, 43.471308], [-80.269944, 43.387323], [-80.231094, 43.393573], [-80.219752, 43.36775], [-80.037999, 43.398423], [-80.065613, 43.43198], [-80.007935, 43.470861], [-80.149384, 43.571437], [-79.966736, 43.732406], [-80.134277, 43.863248], [-80.238648, 43.771094], [-80.370483, 43.862258], [-80.388336, 43.857307], [-80.443268, 44.023434], [-80.371857, 44.037257], [-80.395203, 44.130971], [-80.358124, 44.162504], [-80.413055, 44.194021], [-80.402069, 44.210757], [-80.227661, 44.247166], [-80.293579, 44.532738], [-80.404967, 44.540126], [-80.510992, 44.602212], [-80.564896, 44.601645], [-80.5795118070073, 44.6110288761241]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 11 - Dufferin, Simcoe, Halton, Peel, York"}, "geometry": {"type": "Polygon", "coordinates": [[[-79.1341834641002, 44.4817504028518], [-79.071115, 44.529105], [-79.202421, 44.794425], [-79.333514, 44.770392], [-79.594016, 44.86346], [-79.647426, 44.898096], [-79.693359, 44.871598], [-79.699814, 44.813553], [-79.722254, 44.751377], [-79.744677, 44.771089], [-79.817727, 44.764561], [-79.852335, 44.781406], [-79.88866, 44.834558], [-79.997461, 44.929292], [-80.065074, 44.821528], [-80.151096, 44.913486], [-80.194581, 44.912036], [-80.202217, 44.857969], [-80.247822, 44.903492], [-80.247571, 44.820726], [-80.138979, 44.753135], [-80.024376, 44.71159], [-79.983635, 44.667447], [-80.015438, 44.604365], [-79.990062, 44.582598], [-80.0015877964147, 44.5615913711939], [-80.01856, 44.530628], [-80.073953, 44.48503], [-80.112602, 44.473955], [-80.228192, 44.513773], [-80.293579, 44.532738], [-80.227661, 44.247166], [-80.402069, 44.210757], [-80.413055, 44.194021], [-80.358124, 44.162504], [-80.395203, 44.130971], [-80.371857, 44.037257], [-80.443268, 44.023434], [-80.388336, 43.857307], [-80.370483, 43.862258], [-80.238648, 43.771094], [-80.134277, 43.863248], [-79.966736, 43.732406], [-80.149384, 43.571437], [-80.007935, 43.470861], [-80.065613, 43.43198], [-80.037999, 43.398423], [-79.918042, 43.309327], [-79.933087, 43.26884], [-79.882965, 43.283204], [-79.800568, 43.314187], [-79.715424, 43.371116], [-79.708557, 43.391078], [-79.693451, 43.401057], [-79.683838, 43.423004], [-79.665985, 43.442949], [-79.624786, 43.478833], [-79.60345, 43.499007], [-79.600326, 43.531998], [-79.577966, 43.550053], [-79.544818, 43.568495], [-79.540306, 43.586479], [-79.477459, 43.606148], [-79.475474, 43.626965], [-79.457006, 43.633863], [-79.409076, 43.62578], [-79.390425, 43.61134], [-79.322892, 43.614222], [-79.311343, 43.653781], [-79.274449, 43.673226], [-79.255534, 43.692233], [-79.231378, 43.70639], [-79.210446, 43.730724], [-79.154688, 43.759478], [-79.13312, 43.773624], [-79.170815, 43.855648], [-79.329196, 44.222772], [-79.156999, 44.262544], [-79.195823, 44.366003], [-79.148668, 44.470859], [-79.134184, 44.48175], [-79.1341834641002, 44.4817504028518]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 12 - Durham, Northumberland, Kawartha, Peterborough, Hastings"}, "geometry": {"type": "Polygon", "coordinates": [[[-77.703552, 45.412912], [-78.167725, 45.28938], [-77.972717, 44.916194], [-78.130646, 44.859763], [-78.162796, 44.898473], [-78.650026, 44.77929], [-78.58774, 44.646575], [-79.071115, 44.529105], [-79.1341834641002, 44.4817504028518], [-79.134184, 44.48175], [-79.148668, 44.470859], [-79.195823, 44.366003], [-79.156999, 44.262544], [-79.329196, 44.222772], [-79.13312, 43.773624], [-79.09274, 43.82091], [-79.068822, 43.806738], [-79.042943, 43.816046], [-79.007652, 43.816807], [-78.934246, 43.848012], [-78.90202, 43.844521], [-78.878033, 43.848947], [-78.801209, 43.868555], [-78.707921, 43.866028], [-78.616331, 43.899005], [-78.477992, 43.896239], [-78.265979, 43.949696], [-78.073009, 43.965274], [-77.881196, 43.977533], [-77.793446, 44.003257], [-77.694608, 43.98546], [-77.653427, 44.020965], [-77.621841, 44.00862], [-77.598496, 44.033802], [-77.56897, 44.056012], [-77.604675, 44.06736], [-77.576523, 44.087092], [-77.570343, 44.101393], [-77.533264, 44.103858], [-77.504425, 44.116677], [-77.467346, 44.122099], [-77.442627, 44.132449], [-77.413788, 44.140334], [-77.391815, 44.149696], [-77.360916, 44.162012], [-77.325211, 44.16743], [-77.316971, 44.162504], [-77.315598, 44.154622], [-77.297058, 44.153637], [-77.273712, 44.162504], [-77.266159, 44.172355], [-77.257233, 44.179742], [-77.248993, 44.171862], [-77.228394, 44.180234], [-77.207794, 44.166937], [-77.218094, 44.156593], [-77.193375, 44.158071], [-77.180328, 44.161026], [-77.169342, 44.167922], [-77.147369, 44.162012], [-77.117844, 44.168907], [-77.090378, 44.17531], [-77.075272, 44.181219], [-77.050552, 44.191559], [-77.039566, 44.198451], [-77.0724808006498, 44.2646065998041], [-77.139816, 44.399448], [-77.052612, 44.42054], [-77.187195, 44.579219], [-77.205048, 44.57335], [-77.284698, 44.730638], [-77.310104, 44.724784], [-77.703552, 45.412912]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 13 - Prince Edward, Lennox, Addington, Frontenac, Lanark, Leeds, Grenville, Renfrew, Ottawa"}, "geometry": {"type": "Polygon", "coordinates": [[[-76.381073, 44.14674], [-76.336652, 44.177697], [-76.333008, 44.180234], [-76.3591, 44.189097], [-76.341248, 44.198944], [-76.302795, 44.204851], [-76.24649, 44.205835], [-76.180572, 44.228472], [-76.186066, 44.305178], [-76.099548, 44.338583], [-76.000671, 44.358224], [-75.930634, 44.37295], [-75.83725, 44.422011], [-75.846863, 44.45731], [-75.822144, 44.486709], [-75.797424, 44.497485], [-75.779572, 44.517072], [-75.726013, 44.555249], [-75.646362, 44.611979], [-75.561218, 44.665723], [-75.536499, 44.696969], [-75.473328, 44.725272], [-75.462341, 44.744782], [-75.432129, 44.763312], [-75.419769, 44.778911], [-75.385437, 44.781835], [-75.353851, 44.80425], [-75.590057, 45.082248], [-75.350418, 45.172356], [-75.434785, 45.32734], [-75.255318, 45.375061], [-75.339913, 45.532992], [-75.379944, 45.523668], [-75.438995, 45.523668], [-75.488434, 45.500572], [-75.541992, 45.488057], [-75.60791, 45.466873], [-75.691681, 45.459167], [-75.706787, 45.437972], [-75.705414, 45.425444], [-75.747986, 45.410984], [-75.771332, 45.382055], [-75.802918, 45.377232], [-75.819397, 45.35118], [-75.863342, 45.365655], [-75.8781719154907, 45.366203996877], [-75.889435, 45.36662], [-75.896301, 45.388806], [-75.955353, 45.44568], [-76.039124, 45.490946], [-76.066589, 45.481318], [-76.091309, 45.510196], [-76.116028, 45.510196], [-76.217651, 45.51597], [-76.239624, 45.502497], [-76.220398, 45.469762], [-76.283569, 45.458204], [-76.297302, 45.433154], [-76.343994, 45.438936], [-76.404419, 45.467836], [-76.453857, 45.500572], [-76.528015, 45.510196], [-76.618652, 45.525592], [-76.68457, 45.579445], [-76.690064, 45.642848], [-76.717529, 45.671644], [-76.690064, 45.688914], [-76.70929, 45.725356], [-76.772461, 45.733025], [-76.786194, 45.780933], [-76.766968, 45.815401], [-76.775208, 45.863238], [-76.857605, 45.901477], [-76.931763, 45.903389], [-76.931763, 45.870888], [-76.90979, 45.838368], [-76.904297, 45.79434], [-76.945496, 45.771355], [-77.00592, 45.775186], [-77.03064, 45.805829], [-77.096558, 45.838368], [-77.151489, 45.838368], [-77.23938, 45.893832], [-77.308044, 45.939691], [-77.305298, 45.987421], [-77.269592, 46.010316], [-77.450867, 46.097995], [-77.623901, 46.176027], [-77.731018, 46.217852], [-77.77771, 46.196943], [-77.912292, 46.223553], [-78.013916, 46.252048], [-78.060608, 46.24825], [-78.159485, 46.274835], [-78.21167, 46.272936], [-78.255615, 46.278631], [-78.313294, 46.255847], [-78.33252, 46.202646], [-78.3078, 46.096091], [-78.137512, 46.143686], [-78.077087, 46.054173], [-77.714539, 46.097995], [-77.667847, 46.010316], [-77.700806, 45.99887], [-77.590942, 45.924409], [-77.494812, 45.761775], [-77.55249, 45.746444], [-77.832642, 45.671644], [-77.703552, 45.412912], [-77.549744, 45.148148], [-77.310104, 44.724784], [-77.284698, 44.730638], [-77.205048, 44.57335], [-77.187195, 44.579219], [-77.052612, 44.42054], [-77.139816, 44.399448], [-77.072481, 44.264607], [-77.039566, 44.198451], [-77.019653, 44.188113], [-77.305298, 44.114212], [-77.306671, 44.144769], [-77.378082, 44.142798], [-77.487946, 44.105338], [-77.56897, 44.056012], [-77.598496, 44.033802], [-77.570343, 44.00862], [-77.525024, 44.002694], [-77.537384, 43.988862], [-77.575836, 43.985898], [-77.571716, 43.97404], [-77.530518, 43.962179], [-77.516785, 43.93944], [-77.529144, 43.908777], [-77.46872, 43.92955], [-77.420654, 43.930539], [-77.308044, 43.959214], [-77.280579, 43.892944], [-77.240753, 43.90383], [-77.211914, 43.882057], [-77.24762, 43.857307], [-77.202301, 43.857307], [-77.185822, 43.867208], [-77.161102, 43.855326], [-77.155609, 43.832546], [-77.128143, 43.844432], [-77.103424, 43.866218], [-77.081451, 43.865228], [-77.042999, 43.887996], [-77.0018, 43.888986], [-76.988068, 43.898882], [-76.974335, 43.898882], [-76.960602, 43.909766], [-76.944122, 43.913723], [-76.920776, 43.923615], [-76.864471, 43.928561], [-76.858978, 43.944384], [-76.880951, 43.950316], [-76.938629, 43.931528], [-76.960602, 43.941417], [-77.003174, 43.933506], [-77.01004, 43.943395], [-77.0224, 43.93944], [-77.033386, 43.911745], [-77.047119, 43.921637], [-77.038879, 43.952293], [-77.01004, 43.96811], [-76.961975, 43.980958], [-76.959228, 44.016521], [-76.898804, 44.034295], [-76.896057, 44.055025], [-76.841126, 44.092517], [-76.78894, 44.119142], [-76.777954, 44.101393], [-76.698303, 44.108296], [-76.669464, 44.143783], [-76.615906, 44.176295], [-76.555481, 44.14871], [-76.511536, 44.159549], [-76.508789, 44.130971], [-76.456604, 44.140827], [-76.477203, 44.104352], [-76.456309, 44.098727], [-76.433258, 44.092517], [-76.3591, 44.133928], [-76.381073, 44.14674]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 14 - Prescott, Russell, Stormont, Dundas, Glengarry"}, "geometry": {"type": "Polygon", "coordinates": [[[-74.345856, 45.202361], [-74.343796, 45.204538], [-74.471855, 45.302663], [-74.43718, 45.396521], [-74.383278, 45.560218], [-74.425614, 45.567322], [-74.442691, 45.558839], [-74.453977, 45.57045], [-74.456888, 45.585387], [-74.483076, 45.594781], [-74.538758, 45.58698], [-74.589972, 45.611904], [-74.61285, 45.610909], [-74.643981, 45.638725], [-74.724999, 45.614115], [-74.790903, 45.633636], [-74.833453, 45.633037], [-74.939188, 45.644873], [-74.976255, 45.614863], [-75.013299, 45.595993], [-75.077133, 45.587615], [-75.103714, 45.572827], [-75.140566, 45.571053], [-75.178795, 45.577919], [-75.211538, 45.584773], [-75.225856, 45.579788], [-75.247039, 45.580567], [-75.259628, 45.567958], [-75.28045, 45.561116], [-75.308816, 45.549462], [-75.308574, 45.536419], [-75.316691, 45.540478], [-75.339913, 45.532992], [-75.255318, 45.375061], [-75.434785, 45.32734], [-75.350418, 45.172356], [-75.590057, 45.082248], [-75.353851, 44.80425], [-75.312653, 44.826656], [-75.307159, 44.843212], [-75.195923, 44.879228], [-75.132752, 44.924946], [-75.046234, 44.943417], [-75.011902, 44.972571], [-75.011902, 44.982285], [-74.934998, 45.004622], [-74.882812, 45.02598], [-74.829254, 45.030833], [-74.811401, 45.022097], [-74.793549, 45.027921], [-74.792175, 45.010448], [-74.781189, 45.004622], [-74.709778, 45.01336], [-74.65622, 45.027921], [-74.588928, 45.042478], [-74.53125, 45.065762], [-74.502411, 45.120053], [-74.479065, 45.132649], [-74.444733, 45.156864], [-74.432373, 45.157832], [-74.41452, 45.165579], [-74.391174, 45.172356], [-74.391174, 45.179133], [-74.373322, 45.181069], [-74.345856, 45.202361]]]}}, 
+            {"type": "Feature", "properties": {"name": "District 15 - Northern Ontario"}, "geometry": {"type": "Polygon", "coordinates": [[[-91.1558444911341, 55.4860337058909], [-91.1559237, 55.4859811], [-92.1437388, 54.814463], [-93.6700148, 53.733894], [-95.1470948, 52.829321], [-95.1445720000213, 49.9048576262877], [-95.1445718, 49.904614], [-95.1441548, 49.384697], [-94.8504638, 49.325122], [-94.5857958, 48.717601], [-93.7819538, 48.49914], [-92.8486568, 48.579444], [-92.3454278, 48.257041], [-91.6064368, 48.09209], [-91.2621618, 48.098974], [-90.8950128, 48.22209], [-90.7215308, 48.110654], [-90.0992098, 48.108007], [-90.0, 48.0550831], [-89.9945068, 48.052147], [-89.8785298, 47.990019], [-89.4837138, 48.026086], [-89.2634628, 48.193503], [-89.1424588, 48.475001], [-88.7960578, 48.556913], [-88.9992348, 48.289143], [-88.6681498, 48.35477], [-87.9566198, 48.687401], [-87.3862408, 48.76669], [-86.4505958, 48.768229], [-85.8781688, 47.979749], [-85.5976038, 47.919306], [-84.8779218, 47.945007], [-85.0098488, 47.498623], [-84.6067698, 47.34755], [-84.7979738, 46.987747], [-84.4083438, 46.884126], [-84.6124118, 46.735366], [-84.5379308, 46.482838], [-84.1454118, 46.54796], [-84.1023528, 46.251185], [-83.9503258, 46.045454], [-83.6647028, 46.273898], [-82.2573849, 46.0808513], [-82.2426335, 46.044407], [-82.3018229, 46.000035], [-82.5022, 45.9452102], [-82.5456677, 45.9118192], [-82.577991, 45.9747693], [-82.6919271, 45.9666404], [-82.7985171, 45.9233087], [-82.8145668, 46.004546], [-83.2468868, 45.9588137], [-83.3538978, 46.0002794], [-83.4411408, 45.971978], [-83.5211633, 45.8987997], [-83.3541903, 45.8415712], [-83.2765311, 45.8681277], [-82.529485, 45.7362671], [-82.4321635, 45.6866881], [-82.396882, 45.6871086], [-82.0868286, 45.5445842], [-81.8688332, 45.5118389], [-81.8351226, 45.4271113], [-81.7237158, 45.460924], [-81.7604892, 45.5643676], [-81.6983477, 45.6293452], [-81.5626212, 45.8053922], [-81.6711553, 45.8052405], [-81.5159518, 45.961974], [-80.7999808, 45.837018], [-80.5667298, 45.60793], [-80.5433018, 45.363326], [-80.3837528, 45.393579], [-80.1342768, 45.106485], [-79.9627618, 44.950889], [-79.9919678, 44.929292], [-79.8831668, 44.834558], [-79.8468418, 44.781406], [-79.8122338, 44.764561], [-79.7391838, 44.771089], [-79.7167608, 44.751377], [-79.6943208, 44.813553], [-79.6878658, 44.871598], [-79.6419328, 44.898096], [-79.5885228, 44.86346], [-79.3280208, 44.770392], [-79.1969278, 44.794425], [-79.0656218, 44.529105], [-78.5822468, 44.646575], [-78.6445328, 44.77929], [-78.1573028, 44.898473], [-78.1251528, 44.859763], [-77.9672238, 44.916194], [-78.1622318, 45.28938], [-77.6980588, 45.412912], [-77.8271488, 45.671644], [-77.4893188, 45.761775], [-77.5854488, 45.924409], [-77.6953128, 45.99887], [-77.6623538, 46.010316], [-77.7090458, 46.097995], [-78.0715938, 46.054173], [-78.1320188, 46.143686], [-78.3023068, 46.096091], [-78.3270268, 46.202646], [-78.3078008, 46.255847], [-78.5632328, 46.316584], [-78.6950688, 46.308996], [-78.7115478, 46.365884], [-78.9807128, 46.528635], [-79.0026858, 46.611715], [-79.1619868, 46.80758], [-79.3103028, 46.916503], [-79.3432618, 47.010226], [-79.4310748, 47.090595], [-79.4201658, 47.223299], [-79.5453818, 47.389065], [-79.5847588, 47.441151], [-79.5060048, 47.558202], [-79.5147918, 49.710574], [-79.5127028, 50.783289], [-79.5082748, 51.460227], [-79.6943448, 51.41226], [-79.7194508, 51.249723], [-79.8101678, 51.16964], [-79.9804178, 51.250044], [-80.3759768, 51.361492], [-80.6389748, 51.852483], [-81.4625238, 52.41385], [-80.5942798, 52.707094], [-80.7642028, 52.953363], [-81.1347178, 53.245258], [-81.6919478, 53.20905], [-81.8996518, 53.137416], [-82.0625918, 53.019346], [-82.2453818, 53.040222], [-82.0932098, 53.281557], [-82.1156528, 53.804837], [-82.2086528, 54.052092], [-82.4022338, 54.299178], [-82.3391058, 54.491542], [-82.1658068, 54.854883], [-82.2402078, 54.912898], [-82.2930908, 55.14121], [-83.8432968, 55.270667], [-85.0900178, 55.25885], [-85.9709618, 55.682246], [-87.6255908, 56.080188], [-87.9099268, 56.429086], [-88.4327628, 56.60985], [-88.9617918, 56.872996], [-89.9945068, 56.237475], [-90.0, 56.2340139], [-91.1558444911341, 55.4860337058909]]]}}
+        ]};
+
+        function getStyle(feature) {
+            return { fillColor: '#059669', weight: 2, opacity: 0.8, color: '#34d399', fillOpacity: 0.2 };
+        }
+
+        function highlightFeature(e) {
+            const layer = e.target;
+            layer.setStyle({ weight: 4, color: '#6ee7b7', fillOpacity: 0.7, fillColor: '#34d399' });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+        }
+
+        function resetHighlight(e) { geojsonLayer.resetStyle(e.target); }
+
+        function createPopupHTML(feature) {
+            const name = feature.properties.name || "Unknown District";
+            const match = name.match(/District (\d+)/i);
+            const districtNum = match ? match[1] : '';
+            const data = districtData[name];
+
+            if(!data) return `<div class="p-3 text-white">Data unavailable</div>`;
+
+            const isUan = document.querySelector('input[name="n_source"]:checked').value === 'uan';
+            const prices = {
+                uan: parseFloat(elements['uan'].value),
+                urea: parseFloat(elements['urea'].value),
+                map: parseFloat(elements['map-input'].value),
+                potash: parseFloat(elements['potash'].value)
+            };
+
+            const n_tonnage = isUan ? data.uan : (data.uan * (28.0 / 46.0));
+            const cost = (n_tonnage * (isUan ? prices.uan : prices.urea)) + 
+                         (data.map * prices.map) + 
+                         (data.potash * prices.potash);
+
+            return `
+                <div class="p-3 w-80 bg-emerald-950 text-white rounded-lg shadow-2xl border border-emerald-700">
+                    <h4 class="text-emerald-300 text-sm font-extrabold border-b border-emerald-700 pb-1 mb-2 text-center tracking-wide leading-tight">${name}</h4>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <p class="text-[9px] text-emerald-400 uppercase tracking-wider mb-1 font-bold border-b border-emerald-800 pb-0.5">Raw Nutrients</p>
+                            <div class="flex justify-between items-center bg-emerald-900/50 p-1 rounded mb-1"><span class="text-emerald-100">N</span> <span class="font-mono font-bold">${data.rawN}</span></div>
+                            <div class="flex justify-between items-center bg-emerald-900/50 p-1 rounded mb-1"><span class="text-emerald-100">P₂O₅</span> <span class="font-mono font-bold text-amber-200">${data.rawP}</span></div>
+                            <div class="flex justify-between items-center bg-emerald-900/50 p-1 rounded"><span class="text-emerald-100">K₂O</span> <span class="font-mono font-bold text-rose-200">${data.rawK}</span></div>
+                        </div>
+
+                        <div>
+                            <p class="text-[9px] text-emerald-400 uppercase tracking-wider mb-1 font-bold border-b border-emerald-800 pb-0.5">Applied Product</p>
+                            <div class="flex justify-between items-center bg-emerald-900/50 p-1 rounded mb-1"><span class="text-emerald-100" id="popup-n-label-${districtNum}">${isUan ? 'UAN-28' : 'Urea'}</span> <span class="font-mono font-bold" id="popup-n-val-${districtNum}">${formatNumber(n_tonnage)} T</span></div>
+                            <div class="flex justify-between items-center bg-emerald-900/50 p-1 rounded mb-1"><span class="text-emerald-100">MAP</span> <span class="font-mono font-bold text-amber-200">${formatNumber(data.map)} T</span></div>
+                            <div class="flex justify-between items-center bg-emerald-900/50 p-1 rounded"><span class="text-emerald-100">Potash</span> <span class="font-mono font-bold text-rose-200">${formatNumber(data.potash)} T</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-800 p-1.5 rounded text-center shadow-inner border border-emerald-600 mt-2">
+                        <span class="text-emerald-200 text-[10px] uppercase tracking-wide block mb-0.5">Combined Cost</span>
+                        <span class="text-lg font-bold text-white" id="popup-cost-${districtNum}">${formatCurrency(cost)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function onEachFeature(feature, layer) {
+            const name = feature.properties.name || "Unknown District";
+            const match = name.match(/District (\d+)/i);
+            const districtNum = match ? match[1] : '';
+
+            if (districtNum) { 
+                const center = layer.getBounds().getCenter();
+                L.marker(center, {
+                    icon: L.divIcon({
+                        className: 'district-label',
+                        html: `<div class="text-white font-bold text-sm drop-shadow-md opacity-60 hover:opacity-100 transition-opacity">${districtNum}</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    }),
+                    interactive: false 
+                }).addTo(map);
+            }
+
+            layer.bindPopup(function (l) {
+                return createPopupHTML(l.feature);
+            }, {
+                className: 'custom-popup',
+                maxWidth: 400
+            });
+
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: function(e) {
+                    map.flyToBounds(e.target.getBounds(), { padding: [50, 50], duration: 1.0, easeLinearity: 0.25 });
+                    e.target.openPopup();
+                }
+            });
+        }
+
+        let geojsonLayer = L.geoJSON(kmlData, {
+            style: getStyle,
+            onEachFeature: onEachFeature
+        }).addTo(map);
+        
+        // Tighter bounds focusing on Southern/Eastern Ontario
+        const initialBounds = L.latLngBounds(
+            [41.7, -83.0], 
+            [45.5, -74.5]  
+        );
+        map.fitBounds(initialBounds, { padding: [30, 30] });
+
+        map.on('popupclose', function(e) {
+            map.flyToBounds(initialBounds, { padding: [20, 20], duration: 1.0, easeLinearity: 0.25 });
+        });
+
+        setTimeout(() => { map.invalidateSize(); }, 200);
+        calculateBaselineTotal(); // set baseline based on initial N source
+        update(); // initial render of summary and table
+
+    </script>
+</body>
+</html>
